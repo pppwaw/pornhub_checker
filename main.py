@@ -6,12 +6,13 @@ from queue import Queue
 from requests import post
 from json import loads
 from time import time
+
 token = ""
 captcha_token = ""
 mail = Queue()
 true = Queue()
 end = False
-cookie_time=0
+cookie_time = 0
 
 
 def check(email):
@@ -92,5 +93,29 @@ def t_check():
                         true.put(email)
 
 
+def t_write():
+    with open("true.txt", "a", encoding="utf-8") as f:
+        while True:
+            mail = true.get()
+            f.write(mail + "\n")
+            f.flush()
+
+
 if __name__ == '__main__':
-    pass
+    with open("email.txt") as f:
+        mails = f.read().split(",")
+    if len(mails) <= 200:
+        tc = len(mails)
+    elif len(mails) <= 1000:
+        tc = 200
+    else:
+        tc = 1000
+    pool = []
+    for i in range(tc):
+        mail.put([mails[i], 0])
+        t = Thread(target=t_check)
+        pool.append(t)
+        t.start()
+    Thread(target=t_write,daemon=True).start()
+    [mail.put([i, 0]) for i in mails[tc:]]
+    end=True
