@@ -9,6 +9,7 @@ from time import time
 
 token = ""
 captcha_token = ""
+cookies = {}
 mail = Queue()
 true = Queue()
 end = False
@@ -38,7 +39,8 @@ def check(email):
         'password': ''
     }
     params = {'token': token}
-    return post('https://www.pornhub.com/user/create_account_check', headers=headers, params=params, data=data).text
+    return post('https://www.pornhub.com/user/create_account_check', headers=headers, params=params, data=data,
+                cookies=cookies).text
 
 
 def get_driver() -> WebDriver:
@@ -63,7 +65,11 @@ def get_cookie():
     token = driver.find_element_by_id("token").get_attribute("value")
     captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
     cookie_time = time()
+    # print(driver.get_cookies())
+    for i in driver.get_cookies():
+        cookies[i["name"]] = i["value"]
     driver.close()
+    # print(token, captcha_token)
 
 
 def t_check():
@@ -82,8 +88,10 @@ def t_check():
                 if internet >= 3:
                     raise e
             else:
+                #print(r)
                 internet = 0
                 if r == '"NOK"':
+                    get_cookie()
                     if count >= 2:
                         continue
                     mail.put([email, count + 1])
@@ -96,26 +104,29 @@ def t_check():
 def t_write():
     with open("true.txt", "a", encoding="utf-8") as f:
         while True:
-            mail = true.get()
-            f.write(mail + "\n")
+            email = true.get()
+            print(email)
+            f.write(email + "\n")
             f.flush()
 
 
 if __name__ == '__main__':
     with open("email.txt") as f:
         mails = f.read().split(",")
+        # print(mails)
     if len(mails) <= 200:
         tc = len(mails)
     elif len(mails) <= 1000:
         tc = 200
     else:
         tc = 1000
+    get_cookie()
     pool = []
     for i in range(tc):
         mail.put([mails[i], 0])
         t = Thread(target=t_check)
         pool.append(t)
         t.start()
-    Thread(target=t_write,daemon=True).start()
+    Thread(target=t_write, daemon=True).start()
     [mail.put([i, 0]) for i in mails[tc:]]
-    end=True
+    end = True
