@@ -12,6 +12,7 @@ captcha_token = ""
 cookies = {}
 mail = Queue()
 true = Queue()
+false = Queue()
 end = False
 cookie_time = 0
 
@@ -88,7 +89,7 @@ def t_check():
                 if internet >= 3:
                     raise e
             else:
-                #print(r)
+                # print(r)
                 internet = 0
                 if r == '"NOK"':
                     get_cookie()
@@ -96,12 +97,19 @@ def t_check():
                         continue
                     mail.put([email, count + 1])
                 else:
-                    r = loads(r)
-                    if r["error_message"] == "Email has been taken.":
-                        true.put(email)
+                    try:
+                        r = loads(r)
+                    except:
+                        print(email, r)
+                        mail.put([email, count])
+                    else:
+                        if r["error_message"] == "Email has been taken.":
+                            true.put(email)
+                        else:
+                            false.put(email)
 
 
-def t_write():
+def t_true():
     with open("true.txt", "a", encoding="utf-8") as f:
         while True:
             email = true.get()
@@ -110,8 +118,17 @@ def t_write():
             f.flush()
 
 
+def t_false():
+    with open("false.txt", "a", encoding="utf-8") as f:
+        while True:
+            email = false.get()
+            print(email)
+            f.write(email + "\n")
+            f.flush()
+
+
 if __name__ == '__main__':
-    with open("email.txt") as f:
+    with open("email.txt", encoding="UTF-8") as f:
         mails = f.read().split(",")
         # print(mails)
     if len(mails) <= 200:
@@ -127,6 +144,7 @@ if __name__ == '__main__':
         t = Thread(target=t_check)
         pool.append(t)
         t.start()
-    Thread(target=t_write, daemon=True).start()
+    Thread(target=t_true, daemon=True).start()
+    Thread(target=t_false, daemon=True).start()
     [mail.put([i, 0]) for i in mails[tc:]]
     end = True
