@@ -1,7 +1,7 @@
 from selenium.webdriver import ChromeOptions, Chrome, Firefox, FirefoxOptions
 from selenium.webdriver.remote.webdriver import WebDriver
 from os import system
-from threading import Thread, Lock
+from threading import Thread
 from queue import Queue
 from requests import post
 from json import loads
