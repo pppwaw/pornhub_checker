@@ -118,15 +118,15 @@ def t_check():
                     else:
                         if r["error_message"] == "Email has been taken.":
                             true.put(email)
+                            print("True|" + email)
                         else:
-                            print(email, r)
+                            print("False|" + email)
 
 
 def t_true():
     with open("true.txt", "a", encoding="utf-8") as f:
         while True:
             email = true.get()
-            print(email)
             f.write(email + "\n")
             f.flush()
 
