@@ -7,6 +7,7 @@ from requests import post
 from json import loads
 from time import time, sleep
 from signal import signal, SIGINT, SIGTERM
+
 token = ""
 captcha_token = ""
 cookies = {}
