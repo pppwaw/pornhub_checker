@@ -113,8 +113,10 @@ def t_check():
                     try:
                         r = loads(r)
                     except:
-                        print(email, r)
-                        mail.put([email, count])
+                        if r != '"NOK"':
+                            mail.put([email, count + 1])
+                        else:
+                            mail.put([email, count])
                     else:
                         if r["error_message"] == "Email has been taken.":
                             true.put(email)
