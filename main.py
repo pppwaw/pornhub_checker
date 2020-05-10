@@ -6,13 +6,12 @@ from queue import Queue
 from requests import post
 from json import loads
 from time import time, sleep
-
+from signal import signal, SIGINT, SIGTERM
 token = ""
 captcha_token = ""
 cookies = {}
 mail = Queue()
 true = Queue()
-false = Queue()
 end = False
 cookie_time = 0
 l = Lock()
@@ -64,17 +63,7 @@ def get_cookie():
     if time() - 20 <= cookie_time:
         return
     driver = get_driver()
-    x = 0
-    while True:
-        x += 1
-        try:
-            driver.get("https://www.pornhub.com/signup")
-        except:
-            if x == 3:
-                driver.close()
-                l.release()
-                return
-            continue
+    driver.get("https://www.pornhub.com/signup")
     try:
         token = driver.find_element_by_id("token").get_attribute("value")
         captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
@@ -129,22 +118,13 @@ def t_check():
                         if r["error_message"] == "Email has been taken.":
                             true.put(email)
                         else:
-                            false.put(email)
+                            print(email, r)
 
 
 def t_true():
     with open("true.txt", "a", encoding="utf-8") as f:
         while True:
             email = true.get()
-            print(email)
-            f.write(email + "\n")
-            f.flush()
-
-
-def t_false():
-    with open("false.txt", "a", encoding="utf-8") as f:
-        while True:
-            email = false.get()
             print(email)
             f.write(email + "\n")
             f.flush()
@@ -168,6 +148,5 @@ if __name__ == '__main__':
         pool.append(t)
         t.start()
     Thread(target=t_true, daemon=True).start()
-    Thread(target=t_false, daemon=True).start()
     [mail.put([i, 0]) for i in mails[tc:]]
     end = True
