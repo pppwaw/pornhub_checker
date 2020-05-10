@@ -64,7 +64,17 @@ def get_cookie():
     if time() - 20 <= cookie_time:
         return
     driver = get_driver()
-    driver.get("https://www.pornhub.com/signup")
+    x = 0
+    while True:
+        x += 1
+        try:
+            driver.get("https://www.pornhub.com/signup")
+        except:
+            if x == 3:
+                driver.close()
+                l.release()
+                return
+            continue
     try:
         token = driver.find_element_by_id("token").get_attribute("value")
         captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
