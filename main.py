@@ -1,11 +1,11 @@
 from selenium.webdriver import ChromeOptions, Chrome, Firefox, FirefoxOptions
 from selenium.webdriver.remote.webdriver import WebDriver
 from os import system
-from threading import Thread
+from threading import Thread, Lock
 from queue import Queue
 from requests import post
 from json import loads
-from time import time
+from time import time, sleep
 
 token = ""
 captcha_token = ""
@@ -15,6 +15,7 @@ true = Queue()
 false = Queue()
 end = False
 cookie_time = 0
+l = Lock()
 
 
 def check(email):
@@ -58,18 +59,30 @@ def get_driver() -> WebDriver:
 
 
 def get_cookie():
+    l.acquire()
     global token, captcha_token, cookie_time
     if time() - 20 <= cookie_time:
         return
     driver = get_driver()
     driver.get("https://www.pornhub.com/signup")
-    token = driver.find_element_by_id("token").get_attribute("value")
-    captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
+    try:
+        token = driver.find_element_by_id("token").get_attribute("value")
+        captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
+    except:
+        sleep(1)
+        try:
+            token = driver.find_element_by_id("token").get_attribute("value")
+            captcha_token = driver.find_element_by_id("captcha_token").get_attribute("value")
+        except:
+            driver.close()
+            l.release()
+            return
     cookie_time = time()
     # print(driver.get_cookies())
     for i in driver.get_cookies():
         cookies[i["name"]] = i["value"]
     driver.close()
+    l.release()
     # print(token, captcha_token)
 
 
